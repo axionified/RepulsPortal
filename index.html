@@ -1,0 +1,150 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080b12" />
+    <title>REPULS | Discord Activity</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: #080b12;
+            font-family: Arial, sans-serif;
+        }
+
+        #debug {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 24px;
+            color: #e5e7eb;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #263244;
+            border-top-color: #22d3ee;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 2px;
+        }
+
+        #status {
+            color: #9ca3af;
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 440px;
+        }
+
+        #repuls-frame {
+            display: none;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #000;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .spinner { animation: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="debug" role="status" aria-live="polite">
+        <div class="spinner" id="spinner"></div>
+        <h1>REPULS</h1>
+        <div id="status">Initializing Activity...</div>
+    </div>
+
+    <iframe
+        id="repuls-frame"
+        src="https://repuls.io/"
+        title="Repuls.io"
+        allow="fullscreen; microphone"
+        allowfullscreen>
+    </iframe>
+
+    <script type="module">
+        const APPLICATION_ID = "1560977673386197082";
+
+        const debug = document.getElementById("debug");
+        const status = document.getElementById("status");
+        const spinner = document.getElementById("spinner");
+        const frame = document.getElementById("repuls-frame");
+
+        function showStatus(message, showSpinner = false) {
+            debug.style.display = "flex";
+            status.textContent = message;
+            spinner.style.display = showSpinner ? "block" : "none";
+        }
+
+        function showGame() {
+            debug.style.display = "none";
+            frame.style.display = "block";
+        }
+
+        async function startActivity() {
+            const params = new URLSearchParams(window.location.search);
+            const isDiscordActivity = params.has("frame_id");
+
+            if (!isDiscordActivity) {
+                // Normal browser preview, outside Discord.
+                showStatus("Preview mode — opening Repuls.io", true);
+                showGame();
+                return;
+            }
+
+            try {
+                showStatus("Connecting to Discord...", true);
+
+                const { DiscordSDK } = await import(
+                    "https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.2.0/+esm"
+                );
+
+                const discordSdk = new DiscordSDK(APPLICATION_ID);
+
+                await discordSdk.ready();
+
+                // SDK initialized. This does not guarantee the game
+                // itself can be embedded successfully.
+                showGame();
+            } catch (error) {
+                console.error("Discord Activity initialization failed:", error);
+
+                showStatus(
+                    "Couldn't connect to Discord. Check your Activity URL mapping, application settings, and browser console."
+                );
+            }
+        }
+
+        startActivity();
+    </script>
+</body>
+</html>
+```
