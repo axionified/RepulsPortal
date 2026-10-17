@@ -121,12 +121,23 @@
             try {
                 showStatus("Connecting to Discord...", true);
 
-                const { DiscordSDK } = await import(
+                const { DiscordSDK, patchUrlMappings } = await import(
                     "https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.2.0/+esm"
                 );
 
                 const discordSdk = new DiscordSDK(APPLICATION_ID);
                 await discordSdk.ready();
+
+                patchUrlMappings([
+                    { prefix: '/game', target: 'repuls.io' },
+                    { prefix: '/assets', target: 'repuls.io/assets' },
+                    { prefix: '/ws', target: 'repuls.io' },
+                    { prefix: '/youtube-thumb', target: 'img.youtube.com' },
+                    { prefix: '/feature-video-full', target: 'img.youtube.com' },
+                    { prefix: '/event', target: 'repuls.io' },
+                    { prefix: '/ping', target: 'repuls.io' },
+                    { prefix: '/ccu-current', target: 'repuls.io' }
+                ]);
 
                 showStatus("Loading game...", true);
                 
