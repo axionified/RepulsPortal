@@ -1,22 +1,16 @@
-# RepulsDC
+# RepulsPortal
 
-RepulsDC aims to provide a simple, accessible way to launch Repuls.io through Discord using a lightweight HTML wrapper and the Discord Embedded App SDK.
+A fast, clean web portal to play [Repuls.io](https://repuls.io/) directly in your browser.
 
-##  Features
+## Features
+- **Cleaner View:** Full-screen, borderless layout with no extra menus or distractions.
+- **Smooth Loading:** Includes a custom loading screen so you know exactly when the game is ready.
+- **Fast Loading:** Get straight into the game with minimal delay.
+- **Lower Latency:** Direct connection to the game servers with no middleman proxies.
 
--  Repuls.io embedded webpage
--  Discord Embedded App SDK integration
--  Lightweight, single-file HTML implementation
--  Responsive, full-window layout
--  Simple configuration and deployment
-
-##  Technology Stack
-
-- HTML5
-- CSS3
-- JavaScript ES modules
-- Discord Embedded App SDK
-- GitHub Pages
+## How to use
+Just visit the live site:  
+`https://axionified.github.io/RepulsPortal`
 
 ---
 
