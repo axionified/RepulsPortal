@@ -1,6 +1,6 @@
 # RepulsPortal
 
-A fast, clean web portal to play [Repuls.io](https://repuls.io/) directly in your browser.
+A fast, clean web portal to play repuls.io directly in your browser.
 
 ## Features
 - **Cleaner View:** Full-screen, borderless layout with no extra menus or distractions.
@@ -10,7 +10,7 @@ A fast, clean web portal to play [Repuls.io](https://repuls.io/) directly in you
 
 ## How to use
 Just visit the live site:  
-`https://axionified.github.io/RepulsPortal`
+(https://axionified.github.io/RepulsPortal)[https://axionified.github.io/RepulsPortal]
 
 ---
 
