@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080b12" />
-    <title>RepulsDC</title>
+    <title>RepulsPortal</title>
 
     <style>
         * {
@@ -78,81 +78,33 @@
     <div id="debug" role="status" aria-live="polite">
         <div class="spinner" id="spinner"></div>
         <h1>REPULS</h1>
-        <div id="status">Initializing Activity...</div>
+        <div id="status">Loading game...</div>
     </div>
 
     <iframe
         id="repuls-frame"
+        src="https://repuls.io/"
         title="Repuls.io"
         allow="fullscreen; microphone; autoplay; clipboard-write"
         allowfullscreen>
     </iframe>
 
-    <script type="module">
-        const APPLICATION_ID = "1560977673386197082";
-
-        const debug = document.getElementById("debug");
-        const status = document.getElementById("status");
-        const spinner = document.getElementById("spinner");
+    <script>
         const frame = document.getElementById("repuls-frame");
+        const debug = document.getElementById("debug");
 
-        function showStatus(message, showSpinner = false) {
-            debug.style.display = "flex";
-            status.textContent = message;
-            spinner.style.display = showSpinner ? "block" : "none";
-        }
-
-        function showGame() {
+        // When the game finishes loading, hide the spinner and show the game
+        frame.onload = function() {
             debug.style.display = "none";
             frame.style.display = "block";
-        }
+        };
 
-        async function startActivity() {
-            const params = new URLSearchParams(window.location.search);
-            const isDiscordActivity = params.has("frame_id");
-
-            if (!isDiscordActivity) {
-                showStatus("Preview mode — opening Repuls.io", true);
-                frame.src = "https://repuls.io/";
-                showGame();
-                return;
-            }
-
-            try {
-                showStatus("Connecting to Discord...", true);
-
-                const { DiscordSDK, patchUrlMappings } = await import(
-                    "https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.2.0/+esm"
-                );
-
-                const discordSdk = new DiscordSDK(APPLICATION_ID);
-                await discordSdk.ready();
-
-                patchUrlMappings([
-                    { prefix: '/game', target: 'repuls.io' },
-                    { prefix: '/assets', target: 'repuls.io/assets' },
-                    { prefix: '/ws', target: 'repuls.io' },
-                    { prefix: '/youtube-thumb', target: 'img.youtube.com' },
-                    { prefix: '/feature-video-full', target: 'img.youtube.com' },
-                    { prefix: '/event', target: 'repuls.io' },
-                    { prefix: '/ping', target: 'repuls.io' },
-                    { prefix: '/ccu-current', target: 'repuls.io' }
-                ]);
-
-                showStatus("Loading game...", true);
-                
-                frame.src = "/game"; 
-                
-                showGame();
-            } catch (error) {
-                console.error("Discord Activity initialization failed:", error);
-                showStatus(
-                    "Couldn't connect to Discord. Check your Activity URL mapping, application settings, and browser console."
-                );
-            }
-        }
-
-        startActivity();
+        // Failsafe: If the iframe takes too long or the onload event doesn't fire properly,
+        // force it to show the game after 2 seconds anyway.
+        setTimeout(() => {
+            debug.style.display = "none";
+            frame.style.display = "block";
+        }, 2000);
     </script>
 </body>
 </html>
