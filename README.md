@@ -10,7 +10,7 @@ A fast, clean web portal to play repuls.io directly in your browser.
 
 ## How to use
 Just visit the live site:  
-(https://axionified.github.io/RepulsPortal)[https://axionified.github.io/RepulsPortal]
+[https://axionified.github.io/RepulsPortal](https://axionified.github.io/RepulsPortal)
 
 ---
 
