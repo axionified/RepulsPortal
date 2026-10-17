@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080b12" />
-    <title>REPULS | Discord Activity</title>
+    <title>RepulsDC</title>
 
     <style>
         * {
@@ -114,7 +114,6 @@
             const isDiscordActivity = params.has("frame_id");
 
             if (!isDiscordActivity) {
-                // Normal browser preview, outside Discord.
                 showStatus("Preview mode — opening Repuls.io", true);
                 showGame();
                 return;
@@ -131,8 +130,7 @@
 
                 await discordSdk.ready();
 
-                // SDK initialized. This does not guarantee the game
-                // itself can be embedded successfully.
+
                 showGame();
             } catch (error) {
                 console.error("Discord Activity initialization failed:", error);
