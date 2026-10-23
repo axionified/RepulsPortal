@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#05070c" />
+<title>REPULS</title>
+<style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: #080b12; color: #e5e7eb; font-family: Arial, sans-serif; }
+body { display: flex; flex-direction: column; }
+#bar { position: relative; z-index: 20; flex: none; height: 36px; display: flex; align-items: center; padding: 0 10px; background: #05070c; border-bottom: 1px solid #151b28; }
+.title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #8b94a5; pointer-events: none; }
+.tools { margin-left: auto; display: flex; gap: 6px; }
+.tool { width: 28px; height: 28px; display: grid; place-items: center; padding: 0; background: transparent; border: 1px solid transparent; border-radius: 9px; color: #9ca3af; cursor: pointer; transition: border-color .15s, background .15s; }
+.tool:hover, .tool.on { background: #101726; border-color: #22d3ee; color: #fff; }
+.tool svg { width: 18px; height: 18px; }
+.panel { display: none; position: fixed; top: 42px; right: 10px; z-index: 30; width: 340px; max-height: calc(100% - 54px); overflow: auto; padding: 14px; background: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, .6); }
+.panel.open { display: block; }
+.panel h2 { margin: 0 0 4px; font-size: 14px; }
+.hint { margin: 0 0 10px; font-size: 11px; color: #7b8496; line-height: 1.4; }
+.row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #151b28; font-size: 12px; }
+.row span { flex: 1; }
+.key { min-width: 70px; padding: 4px 8px; background: #111827; color: #fff; border: 1px solid #263244; border-radius: 6px; font: 11px monospace; cursor: pointer; }
+.key.on { background: #22d3ee; color: #000; }
+.btn { width: 100%; margin-top: 10px; padding: 8px; background: transparent; color: #e5e7eb; border: 1px solid #263244; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.btn:hover { border-color: #22d3ee; }
+#cgrid { display: grid; grid-template-columns: repeat(24, 12px); width: 290px; margin: 0 auto 8px; border: 1px solid #263244; background: #000; user-select: none; cursor: crosshair; }
+#cgrid div { width: 12px; height: 12px; border: 0 solid #0f1520; border-width: 0 1px 1px 0; }
+.field { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 12px; }
+.field > span:first-child { width: 70px; }
+.field input[type=range], .field select { flex: 1; }
+.field select { padding: 5px; background: #111827; color: #fff; border: 1px solid #263244; border-radius: 6px; }
+#reticle { position: fixed; top: calc(50% + 18px); left: 50%; z-index: 15; display: none; transform: translate(-50%, -50%); background-size: contain; background-repeat: no-repeat; image-rendering: pixelated; pointer-events: none; }
+#debug { position: fixed; inset: 36px 0 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; background: #080b12; }
+.spinner { width: 36px; height: 36px; border: 3px solid #263244; border-top-color: #22d3ee; border-radius: 50%; animation: spin .8s linear infinite; }
+#debug h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+#status { color: #9ca3af; font-size: 14px; }
+#repuls-frame { display: none; flex: 1; min-height: 0; width: 100%; border: 0; background: #000; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="title">REPULS</div>
+  <div class="tools">
+    <button class="tool" id="kbBtn" title="Keybinds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></button>
+    <button class="tool" id="chBtn" title="Crosshair"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></button>
+    <button class="tool" id="fsBtn" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+</div>
+
+<section class="panel" id="kbPanel">
+  <h2>Keybinds</h2>
+  <p class="hint">Click a key box, then press the key you want. Esc cancels. Remapping in game needs the Keybinds extension installed.</p>
+  <div id="kbBody"></div>
+  <button class="btn" id="kbReset">Reset to default</button>
+</section>
+
+<section class="panel" id="chPanel">
+  <h2>Crosshair</h2>
+  <p class="hint">Click or drag on the grid to draw your reticle.</p>
+  <div id="cgrid"></div>
+  <label class="field"><span>Preset</span>
+    <select id="preset">
+      <option value="cross">Classic cross</option>
+      <option value="dot">Center dot</option>
+      <option value="circle">Ring</option>
+      <option value="donut">Donut</option>
+      <option value="square">Square frame</option>
+      <option value="tstyle">T-style</option>
+      <option value="scope">Scope</option>
+      <option value="blank">Blank</option>
+    </select>
+  </label>
+  <label class="field"><span>Color</span><input type="color" id="chColor" /></label>
+  <label class="field"><span>Size</span><input type="range" id="chScale" min="0.5" max="3" step="0.1" /></label>
+  <label class="field"><span>Opacity</span><input type="range" id="chOpacity" min="10" max="100" step="5" /></label>
+  <label class="field"><span>Glow</span><input type="range" id="chGlow" min="0" max="20" step="1" /></label>
+  <label class="field"><span>Animation</span>
+    <select id="chAnim">
+      <option value="none">None</option>
+      <option value="spin">Spin</option>
+      <option value="pulse">Pulse</option>
+    </select>
+  </label>
+  <label class="field"><input type="checkbox" id="chEnabled" /><span>Show reticle</span></label>
+  <label class="field"><input type="checkbox" id="chLocked" /><span>Only while the mouse is locked in game</span></label>
+</section>
+
+<div id="reticle"></div>
+
+<div id="debug" role="status" aria-live="polite">
+  <div class="spinner"></div>
+  <h1>REPULS</h1>
+  <div id="status">Loading game...</div>
+</div>
+
+<iframe id="repuls-frame" src="https://repuls.io/" title="Repuls.io" allow="fullscreen; microphone; autoplay; clipboard-write" allowfullscreen></iframe>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const frame = $("repuls-frame");
+
+const actionList = [
+  ["moveForward", "Move Forward", "w"], ["moveBackward", "Move Backward", "s"],
+  ["moveLeft", "Move Left", "a"], ["moveRight", "Move Right", "d"],
+  ["jump", "Jump", "space"], ["cycleWeapon", "Cycle Weapon", "1"],
+  ["useEquipment", "Use Equipment", "2"], ["useAbility", "Use Ability", "3"],
+  ["useItem", "Use Item", "4"], ["reload", "Reload", "r"],
+  ["melee", "Melee", "q"], ["use", "Use", "e"],
+  ["matchOptions", "Match Options", "tab"], ["chat", "Chat", "enter"],
+  ["teamChat", "Team Chat", "backspace"], ["doEmote", "Do Emote", "b"]
+];
+
+const specialList = [
+  ["holdScope", "Scope (hold)", "z"], ["toggleScope", "Scope (toggle)", "p"],
+  ["holdSprint", "Sprint (hold)", "shift"], ["toggleSprint", "Sprint (toggle)", "m"],
+  ["fire", "Fire (hold)", "f"]
+];
+
+const keyNames = { space: "Space", shift: "Shift", tab: "Tab", enter: "Enter", backspace: "Backspace", control: "Ctrl", alt: "Alt", capslock: "Caps", arrowup: "↑", arrowdown: "↓", arrowleft: "←", arrowright: "→" };
+const modNames = { ctrl: "Ctrl", alt: "Alt", shift: "Shift", meta: "Cmd" };
+
+function keyLabel(value) {
+  return value.split("+").map((part) => modNames[part] || keyNames[part] || (part.length === 1 ? part.toUpperCase() : part)).join(" + ");
+}
+
+function defaultKb() {
+  const base = { actions: {}, special: {}, conveyor: { on: true, combo: "ctrl+k" } };
+  actionList.forEach(([id, , key]) => { base.actions[id] = { enabled: true, key }; });
+  specialList.forEach(([id, , key]) => { base.special[id] = { enabled: true, key }; });
+  return base;
+}
+
+function readStore(name) {
+  try { return JSON.parse(localStorage.getItem(name)) || {}; } catch (err) { return {}; }
+}
+
+function writeStore(name, value) {
+  try { localStorage.setItem(name, JSON.stringify(value)); } catch (err) {}
+}
+
+function mergeKb(stored) {
+  const base = defaultKb();
+  ["actions", "special"].forEach((group) => {
+    Object.keys(base[group]).forEach((id) => Object.assign(base[group][id], stored[group] && stored[group][id]));
+  });
+  Object.assign(base.conveyor, stored.conveyor);
+  return base;
+}
+
+let kb = mergeKb(readStore("repulsSettings"));
+let listening = null;
+
+function pushKb() {
+  if (frame.contentWindow) frame.contentWindow.postMessage({ repulsKB: kb }, "*");
+}
+
+function saveKb() {
+  writeStore("repulsSettings", kb);
+  pushKb();
+}
+
+function makeRow(title, toggle, target, isCombo) {
+  const row = document.createElement("div");
+  row.className = "row";
+  if (toggle) {
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = !!toggle[0][toggle[1]];
+    box.onchange = () => { toggle[0][toggle[1]] = box.checked; saveKb(); };
+    row.append(box);
+  }
+  const name = document.createElement("span");
+  name.textContent = title;
+  const btn = document.createElement("button");
+  btn.className = "key";
+  btn.textContent = keyLabel(target[0][target[1]]);
+  btn.onclick = () => {
+    if (listening) renderKb();
+    listening = { target, isCombo };
+    btn.textContent = isCombo ? "press combo" : "press key";
+    btn.classList.add("on");
+  };
+  row.append(name, btn);
+  return row;
+}
+
+function renderKb() {
+  listening = null;
+  const body = $("kbBody");
+  body.innerHTML = "";
+  body.append(makeRow("Extension on/off", [kb.conveyor, "on"], [kb.conveyor, "combo"], true));
+  actionList.forEach(([id, label]) => body.append(makeRow(label, null, [kb.actions[id], "key"], false)));
+  specialList.forEach(([id, label]) => body.append(makeRow(label, [kb.special[id], "enabled"], [kb.special[id], "key"], false)));
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!listening) return;
+  e.preventDefault();
+  if (e.key === "Escape") { renderKb(); return; }
+  const key = e.key === " " ? "space" : e.key.toLowerCase();
+  let value = key;
+  if (listening.isCombo) {
+    if (["control", "alt", "shift", "meta"].includes(key)) return;
+    value = [e.ctrlKey && "ctrl", e.altKey && "alt", e.shiftKey && "shift", e.metaKey && "meta", key].filter(Boolean).join("+");
+  }
+  listening.target[0][listening.target[1]] = value;
+  saveKb();
+  renderKb();
+});
+
+$("kbReset").onclick = () => { kb = defaultKb(); saveKb(); renderKb(); };
+
+window.addEventListener("message", (e) => {
+  if (e.source !== frame.contentWindow || !e.data) return;
+  if (e.data.repulsKBReady) pushKb();
+  if (typeof e.data.repulsKBOn === "boolean") {
+    kb.conveyor.on = e.data.repulsKBOn;
+    writeStore("repulsSettings", kb);
+    renderKb();
+  }
+});
+
+const SIZE = 24;
+const ring = (r, c, a, b) => { const d = Math.hypot(r - 11.5, c - 11.5); return d >= a && d <= b; };
+const presets = {
+  blank: () => false,
+  cross: (r, c) => ((r === 11 || r === 12) && c >= 6 && c <= 17) || ((c === 11 || c === 12) && r >= 6 && r <= 17),
+  dot: (r, c) => r >= 10 && r <= 13 && c >= 10 && c <= 13,
+  circle: (r, c) => ring(r, c, 5.5, 6.8),
+  donut: (r, c) => ring(r, c, 4, 8),
+  square: (r, c) => (r === 7 || r === 16 ? c >= 7 && c <= 16 : (c === 7 || c === 16) && r >= 7 && r <= 16),
+  tstyle: (r, c) => (r === 11 && c >= 6 && c <= 17) || ((c === 11 || c === 12) && r >= 12 && r <= 18),
+  scope: (r, c) => ring(r, c, 9.5, 10.5) || r === 11 || c === 11
+};
+
+function cellsFor(name) {
+  const out = [];
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) out.push(presets[name](r, c) ? 1 : 0);
+  return out;
+}
+
+const ch = Object.assign(
+  { cells: cellsFor("cross"), color: "#22c55e", scale: 1, opacity: 100, glow: 0, anim: "none", enabled: true, onlyLocked: true },
+  readStore("croshair")
+);
+
+const gridEl = $("cgrid");
+const cellEls = [];
+let painting = false;
+let paintValue = 1;
+
+function paint(i) {
+  ch.cells[i] = paintValue;
+  cellEls[i].style.backgroundColor = paintValue ? ch.color : "";
+  applyReticle();
+}
+
+for (let i = 0; i < SIZE * SIZE; i++) {
+  const cell = document.createElement("div");
+  cell.onmousedown = (e) => { e.preventDefault(); painting = true; paintValue = ch.cells[i] ? 0 : 1; paint(i); };
+  cell.onmouseenter = () => { if (painting) paint(i); };
+  gridEl.append(cell);
+  cellEls.push(cell);
+}
+
+document.addEventListener("mouseup", () => { painting = false; });
+
+function drawGrid() {
+  cellEls.forEach((cell, i) => { cell.style.backgroundColor = ch.cells[i] ? ch.color : ""; });
+}
+
+function reticleImage() {
+  let rects = "";
+  ch.cells.forEach((on, i) => {
+    if (on) rects += `<rect x="${i % SIZE}" y="${Math.floor(i / SIZE)}" width="1" height="1" fill="${ch.color}"/>`;
+  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">${rects}</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+const reticle = $("reticle");
+const pulseFrames = [{ transform: "translate(-50%, -50%) scale(1)" }, { transform: "translate(-50%, -50%) scale(1.3)" }, { transform: "translate(-50%, -50%) scale(1)" }];
+const spinFrames = [{ transform: "translate(-50%, -50%) rotate(0deg)" }, { transform: "translate(-50%, -50%) rotate(360deg)" }];
+let runningAnim = null;
+
+function applyReticle() {
+  const size = 32 * ch.scale;
+  reticle.style.width = size + "px";
+  reticle.style.height = size + "px";
+  reticle.style.backgroundImage = reticleImage();
+  reticle.style.opacity = ch.opacity / 100;
+  reticle.style.filter = ch.glow > 0 ? `drop-shadow(0 0 ${ch.glow}px ${ch.color})` : "none";
+  if (runningAnim) runningAnim.cancel();
+  runningAnim = null;
+  if (ch.anim === "spin") runningAnim = reticle.animate(spinFrames, { duration: 2000, iterations: Infinity });
+  if (ch.anim === "pulse") runningAnim = reticle.animate(pulseFrames, { duration: 1500, iterations: Infinity, easing: "ease-in-out" });
+  writeStore("croshair", ch);
+}
+
+function refreshReticle() {
+  const locked = document.pointerLockElement !== null && document.pointerLockElement !== undefined;
+  reticle.style.display = ch.enabled && (!ch.onlyLocked || locked) ? "block" : "none";
+}
+
+$("preset").onchange = (e) => { ch.cells = cellsFor(e.target.value); drawGrid(); applyReticle(); };
+$("chColor").oninput = (e) => { ch.color = e.target.value; drawGrid(); applyReticle(); };
+$("chScale").oninput = (e) => { ch.scale = Number(e.target.value); applyReticle(); };
+$("chOpacity").oninput = (e) => { ch.opacity = Number(e.target.value); applyReticle(); };
+$("chGlow").oninput = (e) => { ch.glow = Number(e.target.value); applyReticle(); };
+$("chAnim").onchange = (e) => { ch.anim = e.target.value; applyReticle(); };
+$("chEnabled").onchange = (e) => { ch.enabled = e.target.checked; applyReticle(); refreshReticle(); };
+$("chLocked").onchange = (e) => { ch.onlyLocked = e.target.checked; applyReticle(); refreshReticle(); };
+
+$("chColor").value = ch.color;
+$("chScale").value = ch.scale;
+$("chOpacity").value = ch.opacity;
+$("chGlow").value = ch.glow;
+$("chAnim").value = ch.anim;
+$("chEnabled").checked = ch.enabled;
+$("chLocked").checked = ch.onlyLocked;
+
+const panels = { kb: [$("kbBtn"), $("kbPanel")], ch: [$("chBtn"), $("chPanel")] };
+
+function closePanels() {
+  Object.values(panels).forEach(([btn, panel]) => { btn.classList.remove("on"); panel.classList.remove("open"); });
+}
+
+function openPanel(name) {
+  const wasOpen = panels[name][1].classList.contains("open");
+  closePanels();
+  if (wasOpen) return;
+  panels[name][0].classList.add("on");
+  panels[name][1].classList.add("open");
+}
+
+$("kbBtn").onclick = () => openPanel("kb");
+$("chBtn").onclick = () => openPanel("ch");
+$("fsBtn").onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen();
+};
+
+document.addEventListener("mousedown", (e) => {
+  if (!e.target.closest(".panel") && !e.target.closest(".tools")) closePanels();
+});
+window.addEventListener("blur", closePanels);
+
+function showGame() {
+  $("debug").style.display = "none";
+  frame.style.display = "block";
+}
+
+frame.onload = () => { showGame(); pushKb(); };
+setTimeout(showGame, 2000);
+
+renderKb();
+drawGrid();
+applyReticle();
+refreshReticle();
+setInterval(refreshReticle, 200);
+document.addEventListener("pointerlockchange", refreshReticle);
+</script>
+</body>
+</html>
