@@ -86,7 +86,7 @@ body { display: flex; flex-direction: column; }
     </select>
   </label>
   <label class="field"><input type="checkbox" id="chEnabled" /><span>Show reticle</span></label>
-  <label class="field"><input type="checkbox" id="chLocked" /><span>Only while the mouse is locked in game</span></label>
+  <label class="field"><input type="checkbox" id="chLocked" /><span>Only while the game is focused</span></label>
 </section>
 
 <div id="reticle"></div>
@@ -303,7 +303,8 @@ function applyReticle() {
 
 function refreshReticle() {
   const locked = document.pointerLockElement !== null && document.pointerLockElement !== undefined;
-  reticle.style.display = ch.enabled && (!ch.onlyLocked || locked) ? "block" : "none";
+  const focused = document.activeElement === frame;
+  reticle.style.display = ch.enabled && (!ch.onlyLocked || locked || focused) ? "block" : "none";
 }
 
 $("preset").onchange = (e) => { ch.cells = cellsFor(e.target.value); drawGrid(); applyReticle(); };
